@@ -5,8 +5,8 @@ namespace ternet.interfaces
     public interface ICommentPostRepository
     {
         List<CommentPost> GetCommentPost ();
-        void Insert(int commentId, int postId);
-        void Update(int commentId);
+        void Insert(int postId, int commentId);
+        void Update(int commentId, int postId);
         void Delete(int commentId);
     }
 }

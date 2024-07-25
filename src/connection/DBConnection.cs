@@ -28,6 +28,7 @@ namespace ternet.connection
         {
             if (_instance == null)
             {
+                // synchronize access to the singleton instance
                 lock (_lock)
                 {
                     if (_instance == null)

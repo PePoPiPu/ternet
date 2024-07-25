@@ -2,11 +2,11 @@ using ternet.entities;
 
 namespace ternet.interfaces
 {
-    public interface ICommentPostRepository
+    public interface IPostRepository
     {
         List<Post> GetAllPosts();
         List<Post> GetPostByCreator(int userId);
-        List<Post> GetPostByTitle(string postTitle)
+        List<Post> GetPostByTitle(string postTitle);
         Post GetPostById(int postId);
         List<Post> GetPostsByMostLiked();
         List<Post> GetPostsByLessLiked();
