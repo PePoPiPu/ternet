@@ -21,9 +21,11 @@ namespace ternet.main
 
             if (option == 1)
             {
-                foreach (CommentPost comment in commentRepo.GetCommentPost())
+                List<CommentPost> commentList = commentRepo.GetCommentPost();
+                foreach (CommentPost comment in commentList)
                 {
-                    Console.WriteLine(comment);
+                    Console.WriteLine("cp_post_id: " + comment.cp_post_id);
+                    Console.WriteLine("cp_comment_id: " + comment.cp_comment_id);
                 }
             }
         }
