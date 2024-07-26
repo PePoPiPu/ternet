@@ -6,8 +6,8 @@ namespace ternet.entities
     public class User 
     {
         public int user_id { get; set; }
-        public string user_name { get; set; }
-        public string user_pass { get; set; }
+        public string? user_name { get; set; }
+        public string? user_pass { get; set; }
         public bool isAdmin { get; set; }
 
         public User ( int id, string user_name, string user_pass, bool isAdmin) 
@@ -17,6 +17,9 @@ namespace ternet.entities
             this.user_pass = user_pass;
             this.isAdmin = isAdmin;
         }
+
+        public User()
+        {}
         
     }
 }
