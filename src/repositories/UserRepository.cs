@@ -51,7 +51,7 @@ namespace ternet.repositories
         public User GetUserInfoByName(string userName)
         {
             User user = new User();
-             try
+            try
             {
                 using (var connection = new MySqlConnection(DBConnection.connString))
                 {
@@ -85,6 +85,72 @@ namespace ternet.repositories
             }
 
             return user;
+        }
+
+        public bool LogInUser(string userName, string password)
+        {
+            bool loginSuccessful = false;
+            try
+            {
+                using (var connection = new MySqlConnection(DBConnection.connString))
+                {
+                    connection.Open();
+                    string query = $"SELECT * FROM users WHERE user_name = '{userName}' AND user_pass = '{password}';";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                loginSuccessful = true;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (MySqlException ex)
+            {
+                Console.WriteLine($"Database error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+            return loginSuccessful;
+        }
+
+        public int CheckAdminPrivileges (string userName) 
+        {
+            int isAdmin = 0;
+            try
+            {
+                using (var connection = new MySqlConnection(DBConnection.connString))
+                {
+                    connection.Open();
+                    string query = $"SELECT user_isAdmin FROM users WHERE user_name = '{userName}';";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                isAdmin = reader.GetInt32("user_isAdmin");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (MySqlException ex)
+            {
+                Console.WriteLine($"Database error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+            return isAdmin;
         }
 
         public void InsertUser(string userName, string userPass, bool isAdmin)

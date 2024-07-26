@@ -1,5 +1,6 @@
 using ternet.repositories;
 using ternet.entities;
+using ternet.console;
 using System;
 
 namespace ternet.main 
@@ -8,25 +9,17 @@ namespace ternet.main
     {
         public static void Main(string[] args)
         {
-            CommentPostRepository commentRepo = new CommentPostRepository();
+            ConsoleMenu menu = new ConsoleMenu();
 
-            int option;
-
-            Console.WriteLine(" -- Welcome to TerNet! Your terminal social network. -- ");
-            Console.WriteLine(" -- What would you like to do? --");
-            Console.WriteLine("1. See CommentsPosts table");
-
-            // Type casting. ReadLine() only reads strings
-            option = Convert.ToInt32(Console.ReadLine());
-
-            if (option == 1)
+            // Display menu for admin users
+            if (menu.DisplayMenu())
             {
-                List<CommentPost> commentList = commentRepo.GetCommentPost();
-                foreach (CommentPost comment in commentList)
-                {
-                    Console.WriteLine("cp_post_id: " + comment.cp_post_id);
-                    Console.WriteLine("cp_comment_id: " + comment.cp_comment_id);
-                }
+                menu.DisplayAdminMenu();
+            }
+            // Display menu for normal users
+            else
+            {
+                menu.DisplayUserMenu();
             }
         }
     }
