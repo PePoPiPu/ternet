@@ -11,7 +11,7 @@ namespace ternet.repositories
         {
         }
 
-        List<Message> GetAllMessages(int userId)
+        public List<Message> GetAllMessages(int userId)
         {
             Message message;
             List<Message> messages = new List<Message>();
@@ -55,7 +55,7 @@ namespace ternet.repositories
             return messages;
         }
 
-        List<Message> GetMessagesBySenderId(int userId)
+        public List<Message> GetMessagesBySenderId(int userId)
         {
             Message message;
             List<Message> messages = new List<Message>();
@@ -99,7 +99,7 @@ namespace ternet.repositories
             return messages;   
         }
 
-        Message GetMessageById(int messageId, int userId)
+        public Message GetMessageById(int messageId, int userId)
         {
             Message message = null;
 
@@ -140,7 +140,7 @@ namespace ternet.repositories
             return message;
         }
 
-        void InsertMessage(string messageTitle, string messageBody, int receiverId, int userId)
+        public void InsertMessage(string messageTitle, string messageBody, int receiverId, int userId)
         {
             try
             {
@@ -171,7 +171,7 @@ namespace ternet.repositories
             }
         }
 
-        void UpdateMessage(int messageId, string messageTitle, string messageBody, int senderId, int receiverId)
+        public void UpdateMessage(int messageId, string messageTitle, string messageBody, int senderId, int receiverId)
         {
             try
             {
@@ -200,7 +200,7 @@ namespace ternet.repositories
             }
         }
 
-        void DeleteMessage(int messageId)
+        public void DeleteMessage(int messageId)
         {
             try
             {
