@@ -101,7 +101,7 @@ namespace ternet.repositories
 
         public Message GetMessageById(int messageId, int userId)
         {
-            Message message = null;
+            Message message = new Message();
 
             try
             {
@@ -178,13 +178,14 @@ namespace ternet.repositories
                 using (var connection = new MySqlConnection(DBConnection.connString))
                 {
                     connection.Open();
-                    string query = "UPDATE messages SET message_title = @messageTitle, message_body = @messageBody, message_sender = @message_sender, message_receiver = @message_receiver";
+                    string query = "UPDATE messages SET message_title = @messageTitle, message_body = @messageBody, message_sender = @message_sender, message_receiver = @message_receiver WHERE message_id = @messageId";
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@messageTitle", messageTitle);
                         command.Parameters.AddWithValue("@messageBody", messageBody);
                         command.Parameters.AddWithValue("@messageSender", senderId);
                         command.Parameters.AddWithValue("@messageReceiver", receiverId);
+                        command.Parameters.AddWithValue("@messageId", messageId);
 
                         command.ExecuteNonQuery();
                     }

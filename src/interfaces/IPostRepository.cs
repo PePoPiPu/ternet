@@ -11,7 +11,7 @@ namespace ternet.interfaces
         List<Post> GetPostsByMostLiked();
         List<Post> GetPostsByLessLiked();
 
-        void InsertPost (string postTitle, string postBody);
+        void InsertPost (string postTitle, string postBody, int userId);
         void UpdatePost (int postId, string postTitle, string postBody, int userId);
         void DeletePost(int postId);
     }
