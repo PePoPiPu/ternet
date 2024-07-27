@@ -268,7 +268,16 @@ namespace ternet.console
 
         public void CreatePost()
         {
-            
+            Post newPost = new Post();
+
+            // Ask user for post title
+            var newPostTitle = AnsiConsole.Ask<string>("What would you like to name your post? ");
+            var newPostBody = AnsiConsole.Ask<string>("Type away your post content! ");
+
+            posts.InsertPost(newPostTitle, newPostBody, loggedUser.user_id);
+
+            AnsiConsole.WriteLine($"Posted {newPostTitle} succesfully!");
+
         }
         public void DisplayInboxMenu()
         {
