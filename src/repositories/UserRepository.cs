@@ -88,6 +88,44 @@ namespace ternet.repositories
             return user;
         }
 
+        public User GetUserInfoById(int userId)
+        {
+            User user = new User();
+            try
+            {
+                using (var connection = new MySqlConnection(DBConnection.connString))
+                {
+                    connection.Open();
+                    string query = $"SELECT * FROM users WHERE user_id = '{userId}';";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                userId = reader.GetInt32("user_id");
+                                string userName = reader.GetString("user_name");
+                                string userPass = reader.GetString("user_pass");
+                                bool userIsAdmin = reader.GetBoolean("user_isAdmin");
+
+                                user = new User(userId, userName, userPass, userIsAdmin);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (MySqlException ex)
+            {
+                Console.WriteLine($"Database error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+
+            return user;
+        }
         public bool LogInUser(string userName, string password)
         {
             bool loginSuccessful = false;

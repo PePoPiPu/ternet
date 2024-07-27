@@ -10,6 +10,7 @@ namespace ternet.console
         UserRepository user = new UserRepository();
         PostRepository posts = new PostRepository();
         PostCommentRepository comment = new PostCommentRepository();
+        MessageRepository messageRepo = new MessageRepository();
         User loggedUser = new User();
         bool isLoggedIn = false;
         bool userIsAdmin = false;
@@ -48,7 +49,7 @@ namespace ternet.console
             {
                 var choice = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
-                        .AddChoices(new[] { "Sudo Menu", "Community Posts", "Inbox", "Exit"}));
+                        .AddChoices(new[] { "Sudo Menu", "Community Posts", "Messages", "Exit"}));
 
                 switch (choice)
                 {
@@ -58,8 +59,8 @@ namespace ternet.console
                     case "Community Posts":
                         DisplayCommunityPostsMenu();
                         break;
-                    case "Inbox":
-                        DisplayInboxMenu();
+                    case "Messages":
+                        DisplayMessagesMenu();
                         break;
                     case "Exit":
                         AnsiConsole.MarkupLine("Goodbye!");
@@ -88,9 +89,6 @@ namespace ternet.console
                     case "Users Control Panel":
                         DisplayUserControlPanel();
                         break;
-                    case "Posts Control Panel":
-                        //DisplayPostsControlPanel();
-                        break;
                     case "Return":
                         return;
                 }
@@ -99,7 +97,7 @@ namespace ternet.console
 
         public void DisplayCommunityPostsMenu()
         {
-            PrintCenteredTitle($"[bold green]COMMUNITY POSTS :spiral_notepad:: What would you like to do, {loggedUser.user_name}?[/]");
+            AnsiConsole.MarkupLine($"[bold green]COMMUNITY POSTS: What would you like to do, {loggedUser.user_name}?[/]");
             while (true)
             {
                 var choice = AnsiConsole.Prompt(
@@ -279,9 +277,334 @@ namespace ternet.console
             AnsiConsole.WriteLine($"Posted {newPostTitle} succesfully!");
 
         }
+        public void DisplayMessagesMenu()
+        {
+            AnsiConsole.MarkupLine($"[bold green] Messages: What would you like to do {loggedUser.user_name}?[/]");
+            
+            while (true)
+            {
+                var choice = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .AddChoices(new[] { "Inbox", "Sent messages", "Contacts", "Send message", "Return"}));
+
+                switch (choice)
+                {
+                    case "Inbox":
+                        DisplayInboxMenu();
+                        break;
+                    case "Sent messages":
+                        DisplaySentMessagesMenu();
+                        break;
+                    case "Contacts":
+                         DisplayContactsMenu();
+                        break;
+                    case "Send message":
+                        DisplaySendMessageMenu();
+                        break;
+                    case "Return":
+                        return;
+                }
+            }
+        }
+
+        public void DisplayContactsMenu() 
+        {
+            List<User> contacts = new List<User>();
+            List<Message> sentMessages = new List<Message>();
+            User currentSelectedUser = new User();
+            List<string> contactsUsernames = new List<string>();
+
+            // Retrieve list of all messages sent by logged in user
+            sentMessages = messageRepo.GetMessagesBySenderId(loggedUser.user_id);
+
+            // Retrieve each user info with the id
+            foreach(Message message in sentMessages)
+            {
+                contacts.Add(user.GetUserInfoById(message.message_receiver));
+            }
+
+            // Add usernames to list
+            foreach (User user in contacts)
+            {
+                contactsUsernames.Add(user.user_name);
+            }
+
+            // Add a return option
+            contactsUsernames.Add("Return");
+
+            AnsiConsole.MarkupLine($"[bold green] Contacts: What would you like to do {loggedUser.user_name}?[/]");
+
+            // Show options to send message to contact
+            var choice = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .AddChoices(new[] { "Send a message", "Return"}));
+            switch (choice)
+            {
+                case "Open message":
+                    var selectedUser = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                            .Title("Please select a [green]message.[/]")
+                            .PageSize(10)
+                            .MoreChoicesText("[grey](Move up and down to reveal more messages)[/]")
+                            .AddChoices(contactsUsernames));
+
+                    if (selectedUser == "Return")
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        // Retrieve selected user info 
+                        currentSelectedUser = contacts.FirstOrDefault(user => user.user_name == selectedUser);
+
+                        int selectedUserId = currentSelectedUser.user_id; 
+                        string messageTitle = AnsiConsole.Ask<string>("Introduce message subject: ");
+                        string messageBody = AnsiConsole.Ask<string>("Introduce message body: ");
+
+                        messageRepo.InsertMessage(messageTitle, messageBody, selectedUserId, loggedUser.user_id);
+
+                        AnsiConsole.MarkupLine($"[bold green] Message sent successfully to {currentSelectedUser.user_name}![/]");
+                    }
+                    break;
+                case "Return":
+                    return;
+            }
+        }
+
+        public void DisplaySendMessageMenu()
+        {
+            // Get list of all registered users
+            List<User> users = user.GetAllUsers();
+            List<string> usernames = new List<string>();
+            User currentSelectedUser = new User();
+            AnsiConsole.MarkupLine($"[bold green] Send a message: Who do you want to write to {loggedUser.user_name}?[/]");
+            
+            foreach (User user in users)
+            {
+                usernames.Add(user.user_name);
+            }
+
+            // Add a return option
+            usernames.Add("Return");
+
+            // Print usernames for choice
+            var selectedUser = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                            .Title("Please select a [green]message.[/]")
+                            .PageSize(10)
+                            .MoreChoicesText("[grey](Move up and down to reveal more messages)[/]")
+                            .AddChoices(usernames));
+
+            if (selectedUser == "Return")
+            {
+                return;
+            } 
+            else
+            {
+                // Retrieve selected user info 
+                currentSelectedUser = users.FirstOrDefault(user => user.user_name == selectedUser);
+
+                int selectedUserId = currentSelectedUser.user_id; 
+                string messageTitle = AnsiConsole.Ask<string>("Introduce message subject: ");
+                string messageBody = AnsiConsole.Ask<string>("Introduce message body: ");
+
+                messageRepo.InsertMessage(messageTitle, messageBody, selectedUserId, loggedUser.user_id);
+
+                AnsiConsole.MarkupLine($"[bold green] Message sent successfully to {currentSelectedUser.user_name}![/]");
+            }
+        }
+        public void DisplaySentMessagesMenu()
+        {
+            List<Message> messages = new List<Message>();
+            List<string> messagesTitles = new List<string>();
+            Message currentMessage = new Message();
+            User receiver = new User();
+            var table = new Table();
+
+            AnsiConsole.MarkupLine($"[bold green] Inbox: Displaying sent messages[/]");
+
+            messages = messageRepo.GetMessagesBySenderId(loggedUser.user_id);
+
+            // Display messages in table form
+            table.AddColumn("Sent to");
+            table.AddColumn("Subject");
+
+            // Get receiver User
+            receiver = user.GetUserInfoById(currentMessage.message_receiver);
+
+            foreach (Message message in messages)
+            {
+                messagesTitles.Add(message.message_title);
+                table.AddRow(new Markup($"{receiver.user_name}"), new Markup($"{message.message_title}"));
+            }
+            
+            // Add a return option when selecting a message
+            messagesTitles.Add("Return");
+
+            AnsiConsole.MarkupLine($"[bold green] Messages: What would you like to do {loggedUser.user_name}?[/]");
+
+            // Add options to edit or delete a message
+
+            var choice = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .AddChoices(new[] { "Open message", "Return"}));
+
+            switch (choice)
+            {
+                case "Open message":
+                    var selectedMessage = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                            .Title("Please select a [green]message.[/]")
+                            .PageSize(10)
+                            .MoreChoicesText("[grey](Move up and down to reveal more messages)[/]")
+                            .AddChoices(messagesTitles));
+
+                    if (selectedMessage == "Return")
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        // Retrieve selected message object from the list with LINQ
+                        currentMessage = messages.FirstOrDefault(message => message.message_title == selectedMessage);
+
+                        // Display title and body
+                        AnsiConsole.MarkupLine($"[bold royalblue1]Sent to:[/] [bold blue]{receiver.user_name}[/]");
+                        AnsiConsole.MarkupLine($"[bold royalblue1]Subject:[/] [bold blue]{currentMessage.message_title}[/]");
+                        AnsiConsole.MarkupLine($"[bold royalblue1]Body:[/] [bold blue]{currentMessage.message_body}[/]");
+
+                        // Show options to reply or delete
+                        choice = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                        .AddChoices(new[] { "Edit message title", "Delete message", "Return"}));
+
+                        switch (choice)
+                        {
+                            case "Edit message title":
+                                string newTitle = AnsiConsole.Ask<string>("Type in title: ");
+                                string newBody = AnsiConsole.Ask<string>("Type in body: ");
+
+                                messageRepo.UpdateMessage(currentMessage.message_id, newTitle, newBody, loggedUser.user_id, receiver.user_id);
+
+                                break;
+                            case "Delete message":
+                                if (!AnsiConsole.Confirm("Are you sure you want to delete this message? This action is undoable!"))
+                                {
+                                    AnsiConsole.MarkupLine("[bold green] Going back...[/]");
+                                    return;
+                                }
+                                else
+                                {
+                                    messageRepo.DeleteMessage(currentMessage.message_id);
+                                    AnsiConsole.MarkupLine("[bold yellow] Message deleted. Going back...[/]");
+                                    return;
+                                }
+                            case "Return":
+                                return;
+                        }
+                    }
+                    break;
+                case "Return":
+                    return;
+            }
+        }
+
         public void DisplayInboxMenu()
         {
+            List<Message> messages = new List<Message>();
+            List<string> messagesTitles = new List<string>();
+            User sender = new User();
+            Message currentMessage = new Message();
+            var table = new Table();
 
+            AnsiConsole.MarkupLine($"[bold green] Inbox: Displaying received messages[/]");
+
+            messages = messageRepo.GetAllMessages(loggedUser.user_id);
+
+            // Display messages in table form
+            table.AddColumn("Sender");
+            table.AddColumn("Subject");
+
+            foreach (Message message in messages)
+            {
+                messagesTitles.Add(message.message_title);
+                table.AddRow(new Markup($"{message.message_sender}"), new Markup($"{message.message_title}"));
+            }
+
+            
+            // Add a return option when selecting a message
+            messagesTitles.Add("Return");
+
+            AnsiConsole.MarkupLine($"[bold green] Messages: What would you like to do {loggedUser.user_name}?[/]");
+
+            // Get sender User
+            sender = user.GetUserInfoById(currentMessage.message_receiver);
+
+            var choice = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .AddChoices(new[] { "Open message", "Return"}));
+
+            switch (choice)
+            {
+                case "Open message":
+                    var selectedMessage = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                            .Title("Please select a [green]message.[/]")
+                            .PageSize(10)
+                            .MoreChoicesText("[grey](Move up and down to reveal more messages)[/]")
+                            .AddChoices(messagesTitles));
+
+                    if (selectedMessage == "Return")
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        // Retrieve selected message object from the list with LINQ
+                        currentMessage = messages.FirstOrDefault(message => message.message_title == selectedMessage);
+
+                        // Display title and body
+                        AnsiConsole.MarkupLine($"[bold royalblue1]Sent By:[/] [bold blue]{sender.user_name}[/]");
+                        AnsiConsole.MarkupLine($"[bold royalblue1]Subject:[/] [bold blue]{currentMessage.message_title}[/]");
+                        AnsiConsole.MarkupLine($"[bold royalblue1]Body:[/] [bold blue]{currentMessage.message_body}[/]");
+
+                        // Show options to reply or delete
+                        choice = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                        .AddChoices(new[] { "Reply", "Delete message", "Return"}));
+
+                        switch (choice)
+                        {
+                            case "Reply":
+                                int receiverId = currentMessage.message_sender; 
+                                string messageReplyTitle = AnsiConsole.Ask<string>("Introduce message title: ");
+                                string messageReplyBody = AnsiConsole.Ask<string>("Introduce message body: ");
+
+                                messageRepo.InsertMessage(messageReplyTitle, messageReplyBody, receiverId, loggedUser.user_id);
+
+                                AnsiConsole.MarkupLine($"[bold green] Reply sent successfully to {sender.user_name}![/]");
+
+                                break;
+                            case "Delete message":
+                                if (!AnsiConsole.Confirm("Are you sure you want to delete this message? This action is undoable!"))
+                                {
+                                    AnsiConsole.MarkupLine("[bold green] Going back...[/]");
+                                    return;
+                                }
+                                else
+                                {
+                                    messageRepo.DeleteMessage(currentMessage.message_id);
+                                    AnsiConsole.MarkupLine("[bold yellow] Message deleted. Going back...[/]");
+                                    return;
+                                }
+                            case "Return":
+                                return;
+                        }
+                    }
+                    break;
+                case "Return":
+                    return;
+            }
         }
 
         // Sudo Menu Methods
@@ -452,4 +775,3 @@ namespace ternet.console
     }
 
 }
-
