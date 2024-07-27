@@ -1,4 +1,5 @@
 using Spectre.Console;
+using System.Linq;
 using ternet.entities;
 using ternet.repositories;
 
@@ -7,6 +8,8 @@ namespace ternet.console
     public class ConsoleMenu
     {
         UserRepository user = new UserRepository();
+        PostRepository posts = new PostRepository();
+        PostCommentRepository comment = new PostCommentRepository();
         User loggedUser = new User();
         bool isLoggedIn = false;
         bool userIsAdmin = false;
@@ -40,13 +43,12 @@ namespace ternet.console
 
         public void DisplayAdminMenu()
         {
-            PrintLogo();
             PrintCenteredTitle($"[bold green]What would you like to do, {loggedUser.user_name}?[/]");
             while (true)
             {
                 var choice = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
-                        .AddChoices(new[] { "Sudo Menu", "Community Posts", "Inbox"}));
+                        .AddChoices(new[] { "Sudo Menu", "Community Posts", "Inbox", "Exit"}));
 
                 switch (choice)
                 {
@@ -79,18 +81,15 @@ namespace ternet.console
             {
                 var choice = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
-                        .AddChoices(new[] { "Users Control Panel", "Messages Control Panel", "Posts Control Panel", "Return"}));
+                        .AddChoices(new[] { "Users Control Panel", "Posts Control Panel", "Return"}));
 
                 switch (choice)
                 {
                     case "Users Control Panel":
                         DisplayUserControlPanel();
                         break;
-                    case "Messages Control Panel":
-                        DisplayMessagesControlPanel();
-                        break;
                     case "Posts Control Panel":
-                        DisplayPostsControlPanel();
+                        //DisplayPostsControlPanel();
                         break;
                     case "Return":
                         return;
@@ -100,9 +99,177 @@ namespace ternet.console
 
         public void DisplayCommunityPostsMenu()
         {
+            PrintCenteredTitle($"[bold green]COMMUNITY POSTS :spiral_notepad:: What would you like to do, {loggedUser.user_name}?[/]");
+            while (true)
+            {
+                var choice = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .AddChoices(new[] { "See Posts","Post Something", "Return"}));
+
+                switch (choice)
+                {
+                    case "Sudo Menu":
+                        DisplaySudoMenu();
+                        break;
+                    case "See Posts":
+                        SeePosts();
+                        break;
+                    case "Post Something":
+                        CreatePost();
+                        break;
+                    case "Return":
+                        return;
+                }
+            }
+        }
+
+
+        public void SeePosts()
+        {
+            List<Post> postList = new List<Post>();
+            List<string> postsTitles = new List<string>();
+            Post currentPost = new Post();
+
+            postList = posts.GetAllPosts();
+
+            foreach (Post post in postList)
+            {
+                postsTitles.Add(post.post_title);
+            }
+
+            // Add a return option at the end of the list
+            postsTitles.Add("Return");
+
+            var selectedPost = AnsiConsole.Prompt(
+                            new SelectionPrompt<string>()
+                                .Title("Please select a [green]Post.[/]")
+                                .PageSize(10)
+                                .MoreChoicesText("[grey](Move up and down to reveal more users)[/]")
+                                .AddChoices(postsTitles));
+
+            if (selectedPost == "Return")
+            {
+                return;
+            }
+            else
+            {
+                // Display post title 
+                AnsiConsole.MarkupLine($"[bold royalblue1]Title:[/] [bold blue]{selectedPost}[/]");
+
+                // Display post body
+                // Retrieve the post that contains the post title from the posts list using LINQ
+                // LINQ allows to do a query inside a list.
+                currentPost = postList.FirstOrDefault(post => post.post_title == selectedPost);
+
+                AnsiConsole.MarkupLine($"[bold royalblue1]Body[/]: [bold blue]{currentPost.post_body}[/]");
+
+                // Display options for the post 
+                AnsiConsole.MarkupLine($"[bold green]What would you like to do, {loggedUser.user_name}?[/]");
+                while (true)
+                {
+                    var choice = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                            .AddChoices(new[] { "Delete Post", "Add a comment","See Comments", "Return"}));
+
+                    switch (choice)
+                    {
+                        case "Delete Post":
+                            if (!AnsiConsole.Confirm("[red bold] You're about to delete this posts and its comments, are you sure?[/]"))
+                            {
+                                AnsiConsole.MarkupLine("Going back...");
+                                return;
+                            }
+                            else 
+                            {
+                                AnsiConsole.MarkupLine("Post deleted! Going back...");
+                                posts.DeletePost(currentPost.post_id);
+                                return;
+                            }
+                        case "Add a comment":
+                            var newComment = AnsiConsole.Ask<string>("Write your comment: ");
+                            comment.InsertComment(newComment, loggedUser.user_id, currentPost.post_id);
+                            AnsiConsole.MarkupLine("Comment posted! Going back...");
+                            break;
+                        case "See Comments":
+                            var table = new Table();
+                            List<PostComment> comments = new List<PostComment>();
+                            comments = comment.GetCommentsByPost(currentPost.post_id);
+
+                            PrintCenteredTitle($"[bold green]Seeing comments for:[/] [bold blue]{currentPost.post_title}[/]");
+
+                            // Create a table
+                            table.AddColumn(new TableColumn("User")).Centered();
+                            table.AddColumn(new TableColumn("Comment")).Centered();
+                            table.AddColumn(new TableColumn("Likes")).Centered();
+                            foreach (PostComment comment in comments)
+                            {
+                                table.AddRow(new Markup($"{comment.posterUserName}"), new Markup($"{comment.pc_text}"), new Markup($"{comment.pc_likes}"));
+                            }
+                            
+                            // Display comments
+                            AnsiConsole.Write(table);
+
+                            PrintCenteredTitle($"[bold green]What would you like to do, {loggedUser.user_name}?[/]");
+                            // Give option to like comment
+                            choice = AnsiConsole.Prompt(
+                            new SelectionPrompt<string>()
+                            .AddChoices(new[] { "Like Comment", "Return"}));
+                            switch(choice)
+                            {
+                                case "Like Comment":
+                                    List<string> commentList = new List<string>();
+                                    PostComment currentComment = new PostComment();
+                                    // Print comment list to select from
+                                    foreach (PostComment comment in comments)
+                                    {
+                                        commentList.Add(comment.pc_text);
+                                    }
+
+                                    // Add a return option
+                                    commentList.Add("Return");
+
+                                    var selectedComment = AnsiConsole.Prompt(
+                                    new SelectionPrompt<string>()
+                                        .Title("Please select a [green]user.[/]")
+                                        .PageSize(10)
+                                        .MoreChoicesText("[grey](Move up and down to reveal more users)[/]")
+                                        .AddChoices(commentList));
+
+                                    if (!AnsiConsole.Confirm("Like comment?"))
+                                    {
+                                        AnsiConsole.WriteLine("Going back...");
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        // Get selected comment likes and add 1
+                                        currentComment = comments.FirstOrDefault(comment => comment.pc_text == selectedComment);
+                                        currentComment.pc_likes += 1;
+
+                                        // Update database with new value
+                                        comment.UpdateCommentLikes(currentComment.pc_id, currentComment.pc_likes);
+
+                                        AnsiConsole.WriteLine("You liked that comment! Going back...");
+                                        return;
+                                    }
+                                case "Return":
+                                    AnsiConsole.WriteLine("Going back...");
+                                    return;
+                            }
+                            break;
+                        case "Return":
+                            return;
+                    }
+                }
+                
+            }
 
         }
 
+        public void CreatePost()
+        {
+            
+        }
         public void DisplayInboxMenu()
         {
 
@@ -136,62 +303,64 @@ namespace ternet.console
                             usernames.Add(user.user_name);
                         }
 
+                        // Add a return option
+                        usernames.Add("Return");
+
                         var selectedUser = AnsiConsole.Prompt(
                             new SelectionPrompt<string>()
-                                .Title("Please select a [green]user.[/]?")
+                                .Title("Please select a [green]user.[/]")
                                 .PageSize(10)
                                 .MoreChoicesText("[grey](Move up and down to reveal more users)[/]")
                                 .AddChoices(usernames));
                         
-                        choiceUser = user.GetUserInfoByName(selectedUser);
                         
-                        // Show user info
-                        table.AddColumn(new TableColumn("Username").Centered());
-                        table.AddColumn(new TableColumn("Admin Status").Centered());
-
-                        // Shows yes or no in admin status column
-                        if(choiceUser.isAdmin)
+                        if(selectedUser == "Return")
                         {
-                            table.AddRow(new Markup(selectedUser), new Markup("YES"));
+                            return;
                         }
                         else
                         {
-                            table.AddRow(new Markup(selectedUser), new Markup("NO"));
-                        }
-                        
-                        if(choiceUser.isAdmin)
-                        {
-                            if (!AnsiConsole.Confirm("Change status to [blue]normal user[/]?"))
+                            choiceUser = user.GetUserInfoByName(selectedUser);
+                            
+                            // Show user info
+                            table.AddColumn(new TableColumn("Username").Centered());
+                            table.AddColumn(new TableColumn("Admin Status").Centered());
+
+                            // Shows yes or no in admin status column
+                            if(choiceUser.isAdmin)
                             {
-                                AnsiConsole.MarkupLine("Going back...");
-                                return;
+                                table.AddRow(new Markup(selectedUser), new Markup("YES"));
                             }
-                            user.UpdateUser(choiceUser.user_id, choiceUser.user_name, choiceUser.user_pass, false);
-                        }
-                        else 
-                        {
-                            if (!AnsiConsole.Confirm("Change status to [blue]Admin[/]?"))
+                            else
                             {
-                                AnsiConsole.MarkupLine("Going back...");
-                                return;
+                                table.AddRow(new Markup(selectedUser), new Markup("NO"));
                             }
-                            user.UpdateUser(choiceUser.user_id, choiceUser.user_name, choiceUser.user_pass, true);
+                            
+                            if(choiceUser.isAdmin)
+                            {
+                                if (!AnsiConsole.Confirm("Change status to [blue]normal user[/]?"))
+                                {
+                                    AnsiConsole.MarkupLine("Going back...");
+                                    return;
+                                }
+                                user.UpdateUser(choiceUser.user_id, choiceUser.user_name, choiceUser.user_pass, false);
+                            }
+                            else 
+                            {
+                                if (!AnsiConsole.Confirm("Change status to [blue]Admin[/]?"))
+                                {
+                                    AnsiConsole.MarkupLine("Going back...");
+                                    return;
+                                }
+                                user.UpdateUser(choiceUser.user_id, choiceUser.user_name, choiceUser.user_pass, true);
+                            }
+                            
+                            break;
                         }
-                        
-                        break;
                 }
             }
         }
 
-        public void DisplayMessagesControlPanel()
-        {
-
-        }
-
-        public void DisplayPostsControlPanel()
-        {
-
-        }
 
         private void PrintCenteredTitle(string title)
         {

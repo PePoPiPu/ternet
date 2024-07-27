@@ -194,8 +194,8 @@ namespace ternet.repositories
                 using (var connection = new MySqlConnection(DBConnection.connString)) 
                 {
                     connection.Open();
-                    // Sender is always going to be the logged in user.
-                    string query = $"INSERT INTO posts VALUES (null, @pcText, 0, @userId, @pcPost)";
+                    // Commenter is always going to be the logged in user.
+                    string query = $"INSERT INTO post_comments VALUES (null, @pcText, 0, @userId, @pcPost)";
 
                     using (var command = new MySqlCommand(query, connection))
                     {
@@ -224,12 +224,39 @@ namespace ternet.repositories
                 using (var connection = new MySqlConnection(DBConnection.connString))
                 {
                     connection.Open();
-                    string query = "UPDATE messages SET pc_text = @pcText, pc_creator = @userId, pc_post = @postId WHERE pc_id = @commentId";
+                    string query = "UPDATE post_comments SET pc_text = @pcText, pc_creator = @userId, pc_post = @postId WHERE pc_id = @commentId";
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@pcText", commentText);
                         command.Parameters.AddWithValue("@userId", userId);
                         command.Parameters.AddWithValue("@pcPost", postId);
+                        command.Parameters.AddWithValue("@commentId", commentId);
+
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (MySqlException ex)
+            {
+                Console.WriteLine($"Database error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+        }
+
+        public void UpdateCommentLikes(int commentId, int commentLikes)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(DBConnection.connString))
+                {
+                    connection.Open();
+                    string query = "UPDATE post_comments SET pc_likes = @pcLikes WHERE pc_id = @commentId";
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@pcLikes", commentLikes);
                         command.Parameters.AddWithValue("@commentId", commentId);
 
                         command.ExecuteNonQuery();

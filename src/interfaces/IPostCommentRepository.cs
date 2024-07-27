@@ -10,6 +10,7 @@ namespace ternet.entities
         List<PostComment> GetCommentsByCreator(int userId);    
         void InsertComment(string commentText, int userId, int postId);
         void UpdateComment(int commentId, string commentText, int userId, int postId);
+        void UpdateCommentLikes(int commentId, int commentLikes);
         void DeleteComment(int commentId);
     }
 }

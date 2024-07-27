@@ -10,7 +10,7 @@ namespace ternet.entities
         public string? user_pass { get; set; }
         public bool isAdmin { get; set; }
 
-        public User ( int id, string user_name, string user_pass, bool isAdmin) 
+        public User ( int user_id, string user_name, string user_pass, bool isAdmin) 
         {
             this.user_id = user_id;
             this.user_name = user_name;

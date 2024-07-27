@@ -6,12 +6,12 @@ namespace ternet.entities
     public class PostComment 
     {
         public int pc_id { get; set; }
-        public string pc_text { get; set; }
+        public string? pc_text { get; set; }
         public int pc_likes { get; set; }
         public int pc_creator { get; set; }
         public int pc_post { get; set; }
-        public string posterUserName { get; set; }
-        public string postTitle { get; set; }
+        public string? posterUserName { get; set; }
+        public string? postTitle { get; set; }
 
         public PostComment (int pc_id, string pc_text, int pc_likes, int pc_creator, int pc_post, string posterUserName, string postTitle)
         {
@@ -22,6 +22,11 @@ namespace ternet.entities
             this.pc_post = pc_post;
             this.posterUserName = posterUserName;
             this.postTitle = postTitle;
+        }
+
+        public PostComment()
+        {
+
         }
     }
 }

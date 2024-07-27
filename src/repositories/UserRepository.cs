@@ -1,7 +1,8 @@
 using MySql.Data.MySqlClient;
 using ternet.entities;
 using ternet.interfaces;
-using ternet.connection; 
+using ternet.connection;
+using Spectre.Console;
 
 namespace ternet.repositories
 {
@@ -56,7 +57,7 @@ namespace ternet.repositories
                 using (var connection = new MySqlConnection(DBConnection.connString))
                 {
                     connection.Open();
-                    string query = $"SELECT * FROM users WHERE user_name = {userName};";
+                    string query = $"SELECT * FROM users WHERE user_name = '{userName}';";
 
                     using (var command = new MySqlCommand(query, connection))
                     {
