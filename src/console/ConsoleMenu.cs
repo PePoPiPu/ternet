@@ -7,11 +7,13 @@ namespace ternet.console
     public class ConsoleMenu
     {
         UserRepository user = new UserRepository();
+        User loggedUser = new User();
         bool isLoggedIn = false;
-        
+        bool userIsAdmin = false;
+
+
         public bool DisplayMenu()
         {
-            bool userIsAdmin = false;
 
             PrintLogo();
             PrintCenteredTitle("[bold green]Welcome to Ternet[/]");
@@ -38,12 +40,157 @@ namespace ternet.console
 
         public void DisplayAdminMenu()
         {
+            PrintLogo();
+            PrintCenteredTitle($"[bold green]What would you like to do, {loggedUser.user_name}?[/]");
+            while (true)
+            {
+                var choice = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .AddChoices(new[] { "Sudo Menu", "Community Posts", "Inbox"}));
 
+                switch (choice)
+                {
+                    case "Sudo Menu":
+                        DisplaySudoMenu();
+                        break;
+                    case "Community Posts":
+                        DisplayCommunityPostsMenu();
+                        break;
+                    case "Inbox":
+                        DisplayInboxMenu();
+                        break;
+                    case "Exit":
+                        AnsiConsole.MarkupLine("Goodbye!");
+                        return;
+                }
+            }
         }
 
         public void DisplayUserMenu()
         {
-            
+
+        }
+
+        public void DisplaySudoMenu()
+        {
+            PrintCenteredTitle($"[bold green]You're in the general SUDO menu, what would you like to do?[/]");
+            PrintCenteredTitle($"[bold yellow]SUDO ACTIONS REQUIRE NO CONFIRMATION. PLEASE PROCEED WITH CAUTION[/]");
+            while (true)
+            {
+                var choice = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .AddChoices(new[] { "Users Control Panel", "Messages Control Panel", "Posts Control Panel", "Return"}));
+
+                switch (choice)
+                {
+                    case "Users Control Panel":
+                        DisplayUserControlPanel();
+                        break;
+                    case "Messages Control Panel":
+                        DisplayMessagesControlPanel();
+                        break;
+                    case "Posts Control Panel":
+                        DisplayPostsControlPanel();
+                        break;
+                    case "Return":
+                        return;
+                }
+            }
+        }
+
+        public void DisplayCommunityPostsMenu()
+        {
+
+        }
+
+        public void DisplayInboxMenu()
+        {
+
+        }
+
+        // Sudo Menu Methods
+
+        public void DisplayUserControlPanel()
+        {
+            PrintCenteredTitle($"[bold green]User Control Panel: Please choose an action.[/]");
+            PrintCenteredTitle($"[bold yellow]SUDO ACTIONS REQUIRE NO CONFIRMATION. PLEASE PROCEED WITH CAUTION[/]");
+
+            while (true)
+            {
+                var choice = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .AddChoices(new[] { "Update User Credentials", "Delete User", "Return"}));
+                switch(choice)
+                {
+                    case "Update User Credentials":
+                        List<User> users = new List<User>();
+                        User choiceUser = new User();
+                        List<string> usernames = new List<string>();
+                        var table = new Table();
+
+                        users = user.GetAllUsers();
+
+                        foreach (User user in users)
+                        {
+                            #pragma warning disable CS8604 // Possible null reference argument.
+                            usernames.Add(user.user_name);
+                        }
+
+                        var selectedUser = AnsiConsole.Prompt(
+                            new SelectionPrompt<string>()
+                                .Title("Please select a [green]user.[/]?")
+                                .PageSize(10)
+                                .MoreChoicesText("[grey](Move up and down to reveal more users)[/]")
+                                .AddChoices(usernames));
+                        
+                        choiceUser = user.GetUserInfoByName(selectedUser);
+                        
+                        // Show user info
+                        table.AddColumn(new TableColumn("Username").Centered());
+                        table.AddColumn(new TableColumn("Admin Status").Centered());
+
+                        // Shows yes or no in admin status column
+                        if(choiceUser.isAdmin)
+                        {
+                            table.AddRow(new Markup(selectedUser), new Markup("YES"));
+                        }
+                        else
+                        {
+                            table.AddRow(new Markup(selectedUser), new Markup("NO"));
+                        }
+                        
+                        if(choiceUser.isAdmin)
+                        {
+                            if (!AnsiConsole.Confirm("Change status to [blue]normal user[/]?"))
+                            {
+                                AnsiConsole.MarkupLine("Going back...");
+                                return;
+                            }
+                            user.UpdateUser(choiceUser.user_id, choiceUser.user_name, choiceUser.user_pass, false);
+                        }
+                        else 
+                        {
+                            if (!AnsiConsole.Confirm("Change status to [blue]Admin[/]?"))
+                            {
+                                AnsiConsole.MarkupLine("Going back...");
+                                return;
+                            }
+                            user.UpdateUser(choiceUser.user_id, choiceUser.user_name, choiceUser.user_pass, true);
+                        }
+                        
+                        break;
+                }
+            }
+        }
+
+        public void DisplayMessagesControlPanel()
+        {
+
+        }
+
+        public void DisplayPostsControlPanel()
+        {
+
         }
 
         private void PrintCenteredTitle(string title)
@@ -87,7 +234,6 @@ namespace ternet.console
 
         private void Login()
         {
-            bool userIsAdmin;
             string username = "";
             string password = "";
             while (!isLoggedIn)
@@ -100,6 +246,9 @@ namespace ternet.console
                 {
                     AnsiConsole.MarkupLine($"[green]Welcome back, {username}![/]");
                     isLoggedIn = true;
+
+                    loggedUser = user.GetUserInfoByName(username);
+
                     if (CheckAdminPrivileges(username)) 
                     {
                         userIsAdmin = true;

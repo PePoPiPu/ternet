@@ -183,7 +183,7 @@ namespace ternet.repositories
             }
         }
 
-        public void UpdateUser(int userId, string userName, string userPass, bool isAdmin)
+        public void UpdateUser(int userId, string? userName, string? userPass, bool isAdmin)
         {
             try
             {
