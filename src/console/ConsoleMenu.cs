@@ -1,5 +1,4 @@
 using Spectre.Console;
-using System.Linq;
 using ternet.entities;
 using ternet.repositories;
 
@@ -20,7 +19,7 @@ namespace ternet.console
         {
 
             PrintLogo();
-            PrintCenteredTitle("[bold green]Welcome to Ternet[/]");
+            AnsiConsole.MarkupLine("[bold green]Welcome to Ternet[/]");
 
             while (!isLoggedIn)
             {
@@ -46,7 +45,7 @@ namespace ternet.console
 
         public void DisplayAdminMenu()
         {
-            PrintCenteredTitle($"[bold green]What would you like to do, {loggedUser.user_name}?[/]");
+            AnsiConsole.MarkupLine($"[bold green]What would you like to do, {loggedUser.user_name}?[/]");
             while (true)
             {   
                 if (userIsAdmin)
@@ -96,8 +95,8 @@ namespace ternet.console
 
         public void DisplaySudoMenu()
         {
-            PrintCenteredTitle($"[bold green]You're in the general SUDO menu, what would you like to do?[/]");
-            PrintCenteredTitle($"[bold yellow]SUDO ACTIONS REQUIRE NO CONFIRMATION. PLEASE PROCEED WITH CAUTION[/]");
+            AnsiConsole.MarkupLine($"[bold green]You're in the general SUDO menu, what would you like to do?[/]");
+            AnsiConsole.MarkupLine($"[bold yellow]SUDO ACTIONS REQUIRE NO CONFIRMATION. PLEASE PROCEED WITH CAUTION[/]");
             while (true)
             {
                 var choice = AnsiConsole.Prompt(
@@ -210,7 +209,7 @@ namespace ternet.console
                             List<PostComment> comments = new List<PostComment>();
                             comments = comment.GetCommentsByPost(currentPost.post_id);
 
-                            PrintCenteredTitle($"[bold green]Seeing comments for:[/] [bold blue]{currentPost.post_title}[/]");
+                            AnsiConsole.MarkupLine($"[bold green]Seeing comments for:[/] [bold blue]{currentPost.post_title}[/]");
 
                             // Create a table
                             table.AddColumn(new TableColumn("User")).Centered();
@@ -224,7 +223,7 @@ namespace ternet.console
                             // Display comments
                             AnsiConsole.Write(table);
 
-                            PrintCenteredTitle($"[bold green]What would you like to do, {loggedUser.user_name}?[/]");
+                            AnsiConsole.MarkupLine($"[bold green]What would you like to do, {loggedUser.user_name}?[/]");
                             // Give option to like comment
                             choice = AnsiConsole.Prompt(
                             new SelectionPrompt<string>()
@@ -630,8 +629,8 @@ namespace ternet.console
 
         public void DisplayUserControlPanel()
         {
-            PrintCenteredTitle($"[bold green]User Control Panel: Please choose an action.[/]");
-            PrintCenteredTitle($"[bold yellow]SUDO ACTIONS REQUIRE NO CONFIRMATION. PLEASE PROCEED WITH CAUTION[/]");
+            AnsiConsole.MarkupLine($"[bold green]User Control Panel: Please choose an action.[/]");
+            AnsiConsole.MarkupLine($"[bold yellow]SUDO ACTIONS REQUIRE NO CONFIRMATION. PLEASE PROCEED WITH CAUTION[/]");
 
             while (true)
             {
@@ -712,13 +711,6 @@ namespace ternet.console
             }
         }
 
-
-        private void PrintCenteredTitle(string title)
-        {
-            string centeredTitle = CenterText(title);
-            AnsiConsole.MarkupLine(centeredTitle);
-            AnsiConsole.MarkupLine(""); // Blank line for spacing
-        }
 
         private void PrintLogo()
         {
