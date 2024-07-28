@@ -16,7 +16,7 @@ namespace ternet.console
         bool userIsAdmin = false;
 
 
-        public bool DisplayMenu()
+        public void DisplayMenu()
         {
 
             PrintLogo();
@@ -26,53 +26,73 @@ namespace ternet.console
             {
                 var choice = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
-                        .AddChoices(new[] { "Login", "Exit" }));
+                        .AddChoices(new[] {"Sign Up", "Login", "Exit" }));
 
                 switch (choice)
                 {
+                    case "Sign Up":
+                        SignUp();
+                        break;
                     case "Login":
                         Login();
-                        break;
-                    case "Exit":
-                        AnsiConsole.MarkupLine("Goodbye!");
-                        return false;
-                }
-            }
-
-            return userIsAdmin;
-        }
-
-        public void DisplayAdminMenu()
-        {
-            PrintCenteredTitle($"[bold green]What would you like to do, {loggedUser.user_name}?[/]");
-            while (true)
-            {
-                var choice = AnsiConsole.Prompt(
-                    new SelectionPrompt<string>()
-                        .AddChoices(new[] { "Sudo Menu", "Community Posts", "Messages", "Exit"}));
-
-                switch (choice)
-                {
-                    case "Sudo Menu":
-                        DisplaySudoMenu();
-                        break;
-                    case "Community Posts":
-                        DisplayCommunityPostsMenu();
-                        break;
-                    case "Messages":
-                        DisplayMessagesMenu();
                         break;
                     case "Exit":
                         AnsiConsole.MarkupLine("Goodbye!");
                         return;
                 }
             }
+            DisplayAdminMenu();
         }
 
-        public void DisplayUserMenu()
+        public void DisplayAdminMenu()
         {
+            PrintCenteredTitle($"[bold green]What would you like to do, {loggedUser.user_name}?[/]");
+            while (true)
+            {   
+                if (userIsAdmin)
+                {
+                    var choice = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                            .AddChoices(new[] { "Sudo Menu", "Community Posts", "Messages", "Exit"}));
 
+                    switch (choice)
+                    {
+                        case "Sudo Menu":
+                            DisplaySudoMenu();
+                            break;
+                        case "Community Posts":
+                            DisplayCommunityPostsMenu();
+                            break;
+                        case "Messages":
+                            DisplayMessagesMenu();
+                            break;
+                        case "Exit":
+                            AnsiConsole.MarkupLine("Goodbye!");
+                            return;
+                    }
+                }
+                else
+                {
+                    var choice = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                            .AddChoices(new[] {"Community Posts", "Messages", "Exit"}));
+
+                    switch (choice)
+                    {
+                        case "Community Posts":
+                            DisplayCommunityPostsMenu();
+                            break;
+                        case "Messages":
+                            DisplayMessagesMenu();
+                            break;
+                        case "Exit":
+                            AnsiConsole.MarkupLine("Goodbye!");
+                            return;
+                    }
+                }
+            }
         }
+
 
         public void DisplaySudoMenu()
         {
@@ -106,9 +126,6 @@ namespace ternet.console
 
                 switch (choice)
                 {
-                    case "Sudo Menu":
-                        DisplaySudoMenu();
-                        break;
                     case "See Posts":
                         SeePosts();
                         break;
@@ -527,11 +544,13 @@ namespace ternet.console
 
             foreach (Message message in messages)
             {
+                // Retrieve sender username
+                sender = user.GetUserInfoById(message.message_sender);
                 messagesTitles.Add(message.message_title);
-                table.AddRow(new Markup($"{message.message_sender}"), new Markup($"{message.message_title}"));
+                table.AddRow(new Markup($"{sender.user_name}"), new Markup($"{message.message_title}"));
             }
 
-            
+            AnsiConsole.Write(table);
             // Add a return option when selecting a message
             messagesTitles.Add("Return");
 
@@ -762,6 +781,34 @@ namespace ternet.console
             }
         }
 
+        private void SignUp()
+        {
+            string username = "";
+            string password = "";
+            string usernameCheck = "";
+            string passCheck = "";
+            bool matchingCredentials = false;
+
+            AnsiConsole.MarkupLine("[green]Sign up selected: Please enter desired credentials[/]");
+            username = AnsiConsole.Ask<string>("Enter username:");
+            password = AnsiConsole.Prompt(new TextPrompt<string>("Enter password:").Secret());
+
+            while (!matchingCredentials)
+            {
+                AnsiConsole.MarkupLine("[green]Please confirm your credentials.[/]");
+                usernameCheck = AnsiConsole.Ask<string>("Enter username:");
+                passCheck = AnsiConsole.Prompt(new TextPrompt<string>("Enter password:").Secret());
+
+                if (username == usernameCheck && password == passCheck)
+                {
+                    AnsiConsole.MarkupLine("[bold green]Signing up![/]");
+                    matchingCredentials = true;
+                    AnsiConsole.MarkupLine("[bold green]Successfully signed up![/]");
+                    user.InsertUser(username, password, false);
+                    DisplayMenu();
+                }
+            }
+        }
         private bool CheckAdminPrivileges(string userName)
         {
             bool isAdmin = false;

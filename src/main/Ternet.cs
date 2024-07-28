@@ -10,17 +10,8 @@ namespace ternet.main
         public static void Main(string[] args)
         {
             ConsoleMenu menu = new ConsoleMenu();
-
-            // Display menu for admin users
-            if (menu.DisplayMenu())
-            {
-                menu.DisplayAdminMenu();
-            }
-            // Display menu for normal users
-            else
-            {
-                menu.DisplayUserMenu();
-            }
+            
+            menu.DisplayMenu();
         }
     }
 }

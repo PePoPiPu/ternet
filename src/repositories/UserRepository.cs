@@ -134,7 +134,7 @@ namespace ternet.repositories
                 using (var connection = new MySqlConnection(DBConnection.connString))
                 {
                     connection.Open();
-                    string query = $"SELECT * FROM users WHERE user_name = '{userName}' AND user_pass = '{password}';";
+                    string query = $"SELECT * FROM users WHERE user_name = '{userName}' AND user_pass = SHA2('{password}', 512);";
 
                     using (var command = new MySqlCommand(query, connection))
                     {
@@ -200,7 +200,7 @@ namespace ternet.repositories
                 {
                     connection.Open();
                     // Sender is always going to be the logged in user.
-                    string query = $"INSERT INTO users VALUES (null, @userName, @userPass, @isAdmin)";
+                    string query = $"INSERT INTO users VALUES (null, @userName, SHA2(@userPass, 512), @isAdmin)";
 
                     using (var command = new MySqlCommand(query, connection))
                     {
